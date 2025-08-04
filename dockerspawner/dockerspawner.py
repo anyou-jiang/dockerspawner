@@ -191,7 +191,9 @@ class DockerSpawner(Spawner):
             urlinfo = urlparse(docker_host)
             if urlinfo.scheme == 'tcp':
                 return urlinfo.hostname
-        return '127.0.0.1'
+        #return '127.0.0.1'
+        #return '111.231.20.228'
+        return '0.0.0.0'
 
     # unlike container_ip, container_port is the internal port
     # on which the server is bound.
@@ -1200,7 +1202,7 @@ class DockerSpawner(Spawner):
             host_config["cpu_quota"] = int(self.cpu_limit * cpu_period)
 
         if not self.use_internal_ip:
-            host_config["port_bindings"] = {self.port: (self.host_ip,)}
+            host_config["port_bindings"] = {self.port: (self.host_ip, 8888)}
         _deep_merge(host_config, extra_host_config)
         host_config.setdefault("network_mode", self.network_name)
 
@@ -1371,6 +1373,7 @@ class DockerSpawner(Spawner):
         are correct, which depends on the route to the container
         and the port it opens.
         """
+        self.log.info('DEBUG: use_internal_hostname:{}, use_internal_ip:{}'.format(self.use_internal_hostname, self.use_internal_ip))
         if self.use_internal_hostname:
             # internal ssl uses hostnames,
             # required for domain-name matching with internal SSL
@@ -1399,7 +1402,10 @@ class DockerSpawner(Spawner):
             ip = urlparse(self.client.base_url).hostname
             if ip == "localnpipe":
                 ip = "localhost"
-
+        self.log.info('DEBUG: #1 ip: {}, port: {}'.format(ip, port))
+        if ip == "localhost":
+            ip = "111.231.20.228"
+        self.log.info('DEBUG: #2 ip: {}, port: {}'.format(ip, port))
         return ip, port
 
     def get_network_ip(self, network_settings):
