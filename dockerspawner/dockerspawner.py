@@ -203,14 +203,16 @@ class DockerSpawner(Spawner):
         in cases where the Hub and/or proxy are on different machines
         from the user containers.
 
+        This is the port binded in the host machine (not inside the container)
+        It is the HOST_PORT defined in e.g.,  'docker run -d -p HOST_PORT:CONTAINER_PORT nginx' in
+        https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/
+
         Only used when ``use_internal_ip = False``.
         """,
         config=True,
     )
 
-    # This is the port binded in the host machine (not inside the container)
-    # It is the HOST_PORT defined in e.g.,  'docker run -d -p HOST_PORT:CONTAINER_PORT nginx' in
-    # https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/
+
     @default('host_port')
     def _default_host_port(self):
         return 8888
@@ -236,6 +238,16 @@ class DockerSpawner(Spawner):
     @default("ip")
     def _ip_default(self):
         return "0.0.0.0"
+
+    public_ip = Unicode(
+        "111.231.20.228",
+        help="the public IP to access the user notebook",
+        config=True,
+    )
+
+    @default("public_ip")
+    def _public_ip_default(self):
+        return "111.231.20.228"
 
     container_image = Unicode(
         "quay.io/jupyterhub/singleuser:%s" % _jupyterhub_xy,
@@ -1419,11 +1431,13 @@ class DockerSpawner(Spawner):
 
         if ip == "0.0.0.0":
             ip = urlparse(self.client.base_url).hostname
+            self.log.info("urlparse(self.client.base_url).hostname: %s", ip)
             if ip == "localnpipe":
                 ip = "localhost"
 
-        if ip == "localhost":
-            ip = "111.231.20.228"
+            if ip == "localhost":
+                ip = self.public_ip
+
         return ip, port
 
     def get_network_ip(self, network_settings):
