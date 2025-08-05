@@ -193,6 +193,28 @@ class DockerSpawner(Spawner):
                 return urlinfo.hostname
         return '0.0.0.0'
 
+    host_port = Int(
+        8888,
+        help="""The port on the host, it is exposed to the external, so that
+        all request to this port will be forwarded to the container's port (i.e., Spawner.port)'
+
+        Default: 8888
+        it should be accessible by Hub and/or proxy
+        in cases where the Hub and/or proxy are on different machines
+        from the user containers.
+
+        Only used when ``use_internal_ip = False``.
+        """,
+        config=True,
+    )
+
+    # This is the port binded in the host machine (not inside the container)
+    # It is the HOST_PORT defined in e.g.,  'docker run -d -p HOST_PORT:CONTAINER_PORT nginx' in
+    # https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/
+    @default('host_port')
+    def _default_host_port(self):
+        return 8888
+
     # unlike container_ip, container_port is the internal port
     # on which the server is bound.
     container_port = Int(
@@ -1200,7 +1222,7 @@ class DockerSpawner(Spawner):
             host_config["cpu_quota"] = int(self.cpu_limit * cpu_period)
 
         if not self.use_internal_ip:
-            host_config["port_bindings"] = {self.port: (self.host_ip, 8888)}
+            host_config["port_bindings"] = {self.port: (self.host_ip, self.host_port)}
         _deep_merge(host_config, extra_host_config)
         host_config.setdefault("network_mode", self.network_name)
 
