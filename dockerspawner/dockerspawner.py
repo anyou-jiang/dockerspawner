@@ -1234,7 +1234,8 @@ class DockerSpawner(Spawner):
             host_config["cpu_quota"] = int(self.cpu_limit * cpu_period)
 
         if not self.use_internal_ip:
-            host_config["port_bindings"] = {self.port: (self.host_ip, self.host_port)}
+            host_config["port_bindings"] = {self.port: (self.host_ip, )}
+            # host_config["port_bindings"] = {self.port: (self.host_ip, self.host_port)}
         _deep_merge(host_config, extra_host_config)
         host_config.setdefault("network_mode", self.network_name)
 
